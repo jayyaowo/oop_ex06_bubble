@@ -6,10 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
+set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     "${SRC_DIR}/*.cpp"
-    "${SRC_DIR}/*.h"
+    "${INCLUDE_DIR}/*.h"
 )
 
 if(NOT SOURCES)
@@ -36,7 +37,7 @@ endif()
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
+target_include_directories(${PROJECT_NAME} PRIVATE "${INCLUDE_DIR}")
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
 if(APPLE)

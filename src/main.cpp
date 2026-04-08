@@ -1,5 +1,10 @@
 #include "raylib.h"
+#include <iostream>
+#include "test.h"
 int main() {
+
+    std::cout << test << std::endl;
+
     InitWindow(800, 450, "Raylib OOP");
     SetTargetFPS(60);
 
