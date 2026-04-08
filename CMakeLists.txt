@@ -1,43 +1,53 @@
-cmake_minimum_required(VERSION 3.10)
-project(OOP_Raylib_Lab CXX)
+cmake_minimum_required(VERSION 3.14)
+project(OOP_Raylib_Lab LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(RAYLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
-set(RAYLIB_LIB_DIR     "${CMAKE_SOURCE_DIR}/lib")
-set(SRC_DIR            "${CMAKE_SOURCE_DIR}/src")
+set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
 
-file(GLOB_RECURSE SOURCES "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.h")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
+    "${SRC_DIR}/*.cpp"
+    "${SRC_DIR}/*.h"
+)
+
+if(NOT SOURCES)
+    message(FATAL_ERROR "No source files were found in ${SRC_DIR}")
+endif()
+
+find_package(raylib 5 QUIET)
+
+if(NOT raylib_FOUND)
+    include(FetchContent)
+
+    message(STATUS "raylib not found locally. Fetching raylib from GitHub...")
+    set(FETCHCONTENT_QUIET OFF)
+
+    FetchContent_Declare(
+        raylib
+        GIT_REPOSITORY https://github.com/raysan5/raylib.git
+        GIT_TAG 5.5
+        GIT_SHALLOW TRUE
+    )
+
+    FetchContent_MakeAvailable(raylib)
+endif()
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${RAYLIB_INCLUDE_DIR} ${SRC_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE "${SRC_DIR}")
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
 if(APPLE)
-    message(STATUS "Platform: macOS")
-    set(RAYLIB_LIB "${RAYLIB_LIB_DIR}/mac/libraylib.a")
-    target_link_libraries(${PROJECT_NAME} PRIVATE 
-        ${RAYLIB_LIB}
-        "-framework CoreVideo"
-        "-framework IOKit"
-        "-framework Cocoa"
-        "-framework GLUT"
-        "-framework OpenGL"
-    )
-
-elseif(WIN32)
-    message(STATUS "Platform: Windows")
-    set(RAYLIB_LIB "${RAYLIB_LIB_DIR}/win/libraylib.a")
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB} gdi32 winmm)
-
-else()
-    message(STATUS "Platform: Linux")
-    set(RAYLIB_LIB "${RAYLIB_LIB_DIR}/linux/libraylib.a")
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${RAYLIB_LIB} m pthread dl rt X11)
+    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Cocoa")
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/resources")
-    file(COPY "${CMAKE_SOURCE_DIR}/resources" DESTINATION "${CMAKE_BINARY_DIR}")
-    message(STATUS "Assets have been copied to build directory")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/resources"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources"
+        COMMENT "Copying assets to output directory"
+    )
 endif()
